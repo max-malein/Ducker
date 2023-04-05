@@ -111,7 +111,7 @@ namespace Ducker.Core
                         Description = RemoveNewLines(c.Description),
                         Icon = icon,
                         Exposure = c.Exposure.ToString(),
-                        Category = c.Category,
+                        SubCategory = c.SubCategory,
                     };
 
                     dynamic parameters = c.Params;

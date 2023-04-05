@@ -53,7 +53,7 @@ namespace Ducker.Core
         /// <summary>
         /// Category of the component
         /// </summary>
-        public string Category { get; set; }
+        public string SubCategory { get; set; }
 
         /// <summary>
         /// Returns this.Name without any spaces and invalid fileName characters. Used when generating file names.

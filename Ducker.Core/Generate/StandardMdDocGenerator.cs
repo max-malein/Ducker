@@ -22,31 +22,42 @@ namespace Ducker.Core
             DocumentContent docContent = new DocumentContent();
             StringBuilder builder = new StringBuilder();
 
-            foreach (var component in components)
+            var compsBySubCategory = components.GroupBy(c => c.SubCategory).OrderBy(g => g.Key);
+
+            // TODO: icons table
+
+            foreach ( var categoryComponents in compsBySubCategory )
             {
-                if (component.Exposure == "hidden" && settings.IgnoreHidden)
-                    continue;
+                builder.AppendLine(Header(categoryComponents.Key));
 
-                builder.AppendLine(string.Format("{0} {1}", Header(component.Name), Image("",
-                    docContent.RelativePathIcons, component.GetNameWithoutSpaces())));
-                builder.Append(Paragraph(Bold(nameof(component.Name) + ":") + " " + component.Name));
-                builder.Append(Paragraph(Bold(nameof(component.NickName) + ":") + " " + component.NickName));
-                builder.Append(Paragraph(Bold(nameof(component.Description) + ":") + " " + component.Description));
-                builder.Append(Environment.NewLine);
+                foreach (var component in categoryComponents)
+                {
+                    if (component.Exposure == "hidden" && settings.IgnoreHidden)
+                        continue;
 
-                if (component.Input.Count > 0)
-                {
-                    builder.AppendLine(Header(nameof(component.Input), 3));
-                    string table = GenerateParamTable(component.Input);
-                    builder.Append(table);
-                }
-                if (component.Output.Count > 0)
-                {
-                    builder.AppendLine(Header(nameof(component.Output), 3));
-                    string table = GenerateParamTable(component.Output);
-                    builder.Append(table);
+                    builder.AppendLine(string.Format("{0} {1}", Header(component.Name, 2), Image("",
+                        docContent.RelativePathIcons, component.GetNameWithoutSpaces())));
+                    builder.Append(Paragraph(Bold(nameof(component.Name) + ":") + " " + component.Name));
+                    builder.Append(Paragraph(Bold(nameof(component.NickName) + ":") + " " + component.NickName));
+                    builder.Append(Paragraph(Bold(nameof(component.Description) + ":") + " " + component.Description));
+                    builder.Append(Environment.NewLine);
+
+                    if (component.Input.Count > 0)
+                    {
+                        builder.AppendLine(Header(nameof(component.Input), 3));
+                        string table = GenerateParamTable(component.Input);
+                        builder.Append(table);
+                    }
+                    if (component.Output.Count > 0)
+                    {
+                        builder.AppendLine(Header(nameof(component.Output), 3));
+                        string table = GenerateParamTable(component.Output);
+                        builder.Append(table);
+                    }
                 }
             }
+
+            
 
             docContent.Document = builder.ToString();
             docContent.Icons = base.ReadIcons(components);
