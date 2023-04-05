@@ -96,7 +96,8 @@ namespace Ducker.Core
 
                     try
                     {
-                        icon = c.Icon_24x24;
+                        Bitmap componentIcon = c.Icon_24x24;
+                        icon = componentIcon.Clone() as Bitmap;
                     }
                     catch (Exception)
                     {
@@ -107,9 +108,10 @@ namespace Ducker.Core
                     {
                         Name = c.Name,
                         NickName = c.NickName,
-                        Description = c.Description,
+                        Description = RemoveNewLines(c.Description),
                         Icon = icon,
-                         Exposure = c.Exposure.ToString()
+                        Exposure = c.Exposure.ToString(),
+                        Category = c.Category,
                     };
 
                     dynamic parameters = c.Params;
@@ -128,7 +130,13 @@ namespace Ducker.Core
             }
             ExitInProcess();
             return duckers;
+        }
 
+        private static string RemoveNewLines(dynamic description)
+        {
+            var desc = description.ToString();
+            desc = desc.Trim().Replace("\n", "<br>").Replace("\r","");
+            return desc;
         }
 
         /// <summary>
@@ -209,7 +217,7 @@ namespace Ducker.Core
             {
                 Name = parameter.Name,
                 NickName = parameter.NickName,
-                Description = parameter.Description
+                Description = RemoveNewLines(parameter.Description),
             };
             return duckerParam;
         }

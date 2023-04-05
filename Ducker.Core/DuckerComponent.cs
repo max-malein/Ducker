@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 
 namespace Ducker.Core
 {
@@ -50,12 +51,18 @@ namespace Ducker.Core
         public string Exposure { get; set; }
 
         /// <summary>
-        /// Returns this.Name without any spaces. Used when generating file names.
+        /// Category of the component
         /// </summary>
-        /// <returns>The name without any spaces.</returns>
+        public string Category { get; set; }
+
+        /// <summary>
+        /// Returns this.Name without any spaces and invalid fileName characters. Used when generating file names.
+        /// </summary>
+        /// <returns>Valid file name.</returns>
         public string GetNameWithoutSpaces()
         {
-            return this.Name.Replace(" ", string.Empty);
+            var validFileName = string.Join("-", this.Name.Split(Path.GetInvalidFileNameChars()));
+            return validFileName.Replace(" ", string.Empty);
         }
 
         /// <summary>
