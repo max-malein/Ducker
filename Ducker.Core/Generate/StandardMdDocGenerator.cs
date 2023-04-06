@@ -21,22 +21,42 @@ namespace Ducker.Core
         {
             DocumentContent docContent = new DocumentContent();
             StringBuilder builder = new StringBuilder();
+            StringBuilder contentsHeaderBuilder = new StringBuilder();
+            StringBuilder contentsSplitterBuilder = new StringBuilder();
+            StringBuilder contentsIconsBuilder = new StringBuilder();
 
-            var compsBySubCategory = components.GroupBy(c => c.SubCategory).OrderBy(g => g.Key);
+            contentsHeaderBuilder.Append("|");
+            contentsSplitterBuilder.Append("|");
+            contentsIconsBuilder.Append("|");
 
-            // TODO: icons table
+            var compsBySubCategory = components
+                .GroupBy(c => c.SubCategory)
+                .OrderBy(g => g.Key)
+                .ThenBy(g => g.Select(c => Enum.Parse(typeof(GH_Exposure), c.Exposure)))
+                .ThenBy(g => g.Select(c => c.Name));
 
-            foreach ( var categoryComponents in compsBySubCategory )
+            foreach (var subCategoryComponents in compsBySubCategory)
             {
-                builder.AppendLine(Header(categoryComponents.Key));
+                // Skip this subcategory if there's no visible components
+                if (settings.IgnoreHidden && subCategoryComponents.All(c => c.Exposure == "hidden"))
+                {
+                    continue;
+                }
 
-                foreach (var component in categoryComponents)
+                contentsHeaderBuilder.Append(" " + subCategoryComponents.Key + " |");
+                contentsSplitterBuilder.Append(" --- |");
+
+                builder.AppendLine(Header(subCategoryComponents.Key));
+
+                foreach (var component in subCategoryComponents)
                 {
                     if (component.Exposure == "hidden" && settings.IgnoreHidden)
                         continue;
 
-                    builder.AppendLine(string.Format("{0} {1}", Header(component.Name, 2), Image("",
-                        docContent.RelativePathIcons, component.GetNameWithoutSpaces())));
+                    var componentIcon = Image("", docContent.RelativePathIcons, component.GetNameWithoutSpaces());
+                    contentsIconsBuilder.Append(" " + LinkToSection(component.Name, componentIcon));
+
+                    builder.AppendLine(Header(componentIcon + " " + component.Name, 2));
                     builder.Append(Paragraph(Bold(nameof(component.Name) + ":") + " " + component.Name));
                     builder.Append(Paragraph(Bold(nameof(component.NickName) + ":") + " " + component.NickName));
                     builder.Append(Paragraph(Bold(nameof(component.Description) + ":") + " " + component.Description));
@@ -55,13 +75,32 @@ namespace Ducker.Core
                         builder.Append(table);
                     }
                 }
+
+                contentsIconsBuilder.Append(" |");
             }
 
-            
+            docContent.Document = string.Join("\n", contentsHeaderBuilder.ToString(),
+                contentsSplitterBuilder.ToString(),
+                contentsIconsBuilder.ToString(),
+                builder.ToString());
 
-            docContent.Document = builder.ToString();
             docContent.Icons = base.ReadIcons(components);
             return docContent;
+        }
+
+        private enum GH_Exposure
+        {
+            hidden = -1,
+            primary = 2,
+            secondary = 4,
+            tertiary = 8,
+            quarternary = 16,
+            quinary = 32,
+            senary = 64,
+            septenary = 128,
+            octonary = 256,
+            last = 256,
+            obscure = 65536,
         }
     }
 }

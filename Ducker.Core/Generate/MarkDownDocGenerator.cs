@@ -127,6 +127,21 @@ namespace Ducker.Core
             return string.Format("![{0}]({1}/{2}.png)", caption, relativePath, fileName);
         }
 
+        protected string LinkToSection(string sectionName, string linkText = "")
+        {
+            if (linkText == "")
+            {
+                linkText = sectionName;
+            }
+
+            sectionName = sectionName
+                .Replace(" ", "-")
+                .Replace("|","")
+                .ToLower();
+
+            return $"[{linkText}](#{sectionName})";
+        }
+
         /// <summary>
         /// Reades the icons of components.
         /// </summary>
