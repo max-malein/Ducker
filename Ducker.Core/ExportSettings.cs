@@ -48,6 +48,17 @@ namespace Ducker.Core
         public Type DocWriter { get; set; }
 
         /// <summary>
+        /// Generate table of contents.
+        /// </summary>
+        public bool TableOfContents { get; set; }
+
+        /// <summary>
+        /// The links in table of contents will be generated in #-section format.
+        /// Use this option if you want to publish to github pages.
+        /// </summary>
+        public bool GithubPages { get; private set; }
+
+        /// <summary>
         /// Default settings: Description = true, ExportIcons = true, IgnoreHidden = true, 
         /// Name = true, NickName = true, Parameters = true
         /// </summary>
@@ -62,9 +73,13 @@ namespace Ducker.Core
                     IgnoreHidden = true,
                     Name = true,
                     NickName = true,
-                    Parameters = true
+                    Parameters = true,
+                    TableOfContents = true,
+                    GithubPages = true,
                 };
             }
         }
+
+        
     }
 }

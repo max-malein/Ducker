@@ -37,6 +37,7 @@ namespace Ducker.Core
         protected string GenerateParamTable(List<DuckerParam> compParameter)
         {
             StringBuilder builder = new StringBuilder();
+            builder.AppendLine();
             var p = compParameter[0];
             string header = GetParamHeader(p);
             string splitter = "| ------ | ------ | ------ |";
@@ -47,8 +48,10 @@ namespace Ducker.Core
                 string row = GetParamRow(parameter);
                 builder.AppendLine(row);
             }
-            return builder.ToString();
 
+            builder.AppendLine();
+
+            return builder.ToString();
         }
 
         /// <summary>
@@ -127,8 +130,17 @@ namespace Ducker.Core
             return string.Format("![{0}]({1}/{2}.png)", caption, relativePath, fileName);
         }
 
-        protected string LinkToSection(string sectionName, string linkText = "")
+        /// <summary>
+        /// Creates link to section of the document
+        /// </summary>
+        /// <param name="sectionName"></param>
+        /// <param name="linkText"></param>
+        /// <param name="githubPages">Set true if you plan to deploy on Github Pages.</param>
+        /// <returns></returns>
+        protected string LinkToSection(string sectionName, string linkText = "", bool githubPages=false)
         {
+            string gp = githubPages ? "-" : "";
+
             if (linkText == "")
             {
                 linkText = sectionName;
@@ -139,7 +151,7 @@ namespace Ducker.Core
                 .Replace("|","")
                 .ToLower();
 
-            return $"[{linkText}](#{sectionName})";
+            return $"[{linkText}](#{gp}{sectionName})";
         }
 
         /// <summary>

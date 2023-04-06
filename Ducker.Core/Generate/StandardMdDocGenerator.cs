@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -20,33 +21,31 @@ namespace Ducker.Core
         public override DocumentContent Create(List<DuckerComponent> components, ExportSettings settings)
         {
             DocumentContent docContent = new DocumentContent();
-            StringBuilder builder = new StringBuilder();
-            StringBuilder contentsHeaderBuilder = new StringBuilder();
-            StringBuilder contentsSplitterBuilder = new StringBuilder();
-            StringBuilder contentsIconsBuilder = new StringBuilder();
-
-            contentsHeaderBuilder.Append("|");
-            contentsSplitterBuilder.Append("|");
-            contentsIconsBuilder.Append("|");
+            StringBuilder builder = new StringBuilder();            
 
             var compsBySubCategory = components
+                .OrderBy(c => c.SubCategory)
+                .ThenBy(c => Enum.Parse(typeof(GH_Exposure), c.Exposure))
+                .ThenBy(c => c.Name)
                 .GroupBy(c => c.SubCategory)
-                .OrderBy(g => g.Key)
-                .ThenBy(g => g.Select(c => Enum.Parse(typeof(GH_Exposure), c.Exposure)))
-                .ThenBy(g => g.Select(c => c.Name));
+                .ToDictionary(g => g.Key, g => g.ToList()); 
 
-            foreach (var subCategoryComponents in compsBySubCategory)
+            if (settings.TableOfContents)
             {
-                // Skip this subcategory if there's no visible components
+                builder.AppendLine(GenerateTOC(compsBySubCategory, settings, docContent));
+            }
+
+            foreach (var key in compsBySubCategory.Keys)
+            {
+                var subCategoryComponents = compsBySubCategory[key];
+
+                // Skip this subcategory if there are no visible components
                 if (settings.IgnoreHidden && subCategoryComponents.All(c => c.Exposure == "hidden"))
                 {
                     continue;
                 }
 
-                contentsHeaderBuilder.Append(" " + subCategoryComponents.Key + " |");
-                contentsSplitterBuilder.Append(" --- |");
-
-                builder.AppendLine(Header(subCategoryComponents.Key));
+                builder.AppendLine(Header(key));
 
                 foreach (var component in subCategoryComponents)
                 {
@@ -54,7 +53,6 @@ namespace Ducker.Core
                         continue;
 
                     var componentIcon = Image("", docContent.RelativePathIcons, component.GetNameWithoutSpaces());
-                    contentsIconsBuilder.Append(" " + LinkToSection(component.Name, componentIcon));
 
                     builder.AppendLine(Header(componentIcon + " " + component.Name, 2));
                     builder.Append(Paragraph(Bold(nameof(component.Name) + ":") + " " + component.Name));
@@ -68,6 +66,7 @@ namespace Ducker.Core
                         string table = GenerateParamTable(component.Input);
                         builder.Append(table);
                     }
+
                     if (component.Output.Count > 0)
                     {
                         builder.AppendLine(Header(nameof(component.Output), 3));
@@ -75,17 +74,51 @@ namespace Ducker.Core
                         builder.Append(table);
                     }
                 }
+            }
+
+            docContent.Document = builder.ToString();
+
+            docContent.Icons = base.ReadIcons(components);
+            return docContent;
+        }
+
+        private string GenerateTOC(Dictionary<string, List<DuckerComponent>> compsBySubCategory, ExportSettings settings, DocumentContent docContent)
+        {
+            StringBuilder contentsHeaderBuilder = new StringBuilder("\n|");
+            StringBuilder contentsSplitterBuilder = new StringBuilder("|");
+            StringBuilder contentsIconsBuilder = new StringBuilder("|");
+
+            foreach (var subCategoryComponents in compsBySubCategory)
+            {
+                // Skip this subcategory if there are no visible components
+                if (settings.IgnoreHidden && subCategoryComponents.Value.All(c => c.Exposure == "hidden"))
+                {
+                    continue;
+                }
+
+                contentsHeaderBuilder.Append(" " + subCategoryComponents.Key + " |");
+                contentsSplitterBuilder.Append(" --- |");
+
+                foreach (var component in subCategoryComponents.Value)
+                {
+                    if (component.Exposure == "hidden" && settings.IgnoreHidden)
+                        continue;
+
+                    var componentIcon = Image("", docContent.RelativePathIcons, component.GetNameWithoutSpaces());
+                    contentsIconsBuilder.Append(" " + LinkToSection(component.Name, componentIcon, settings.GithubPages));
+                }
 
                 contentsIconsBuilder.Append(" |");
             }
 
-            docContent.Document = string.Join("\n", contentsHeaderBuilder.ToString(),
-                contentsSplitterBuilder.ToString(),
-                contentsIconsBuilder.ToString(),
-                builder.ToString());
+            contentsIconsBuilder.AppendLine(); // line after the table
 
-            docContent.Icons = base.ReadIcons(components);
-            return docContent;
+            var toc = string.Join("\n",
+                contentsHeaderBuilder.ToString(),
+                contentsSplitterBuilder.ToString(),
+                contentsIconsBuilder.ToString());
+
+            return toc;
         }
 
         private enum GH_Exposure
